@@ -1,0 +1,36 @@
+@prefix : <http://ontology.example.org/cat#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://ontology.example.org/cat#> .
+
+<http://data.example.org/resource/cat/1> rdf:type :Cat ;
+                                         :name "Victor" .
+
+<http://data.example.org/resource/person/1> rdf:type :Person ;
+                                            :owns <http://data.example.org/resource/cat/1> ,
+                                                  <http://data.example.org/resource/cat/2> ,
+                                                  <http://data.example.org/resource/cat/3> ;
+                                            :name "Christophe" .
+
+<http://data.example.org/resource/cat/2> rdf:type :Cat ;
+                                         :name "Bettina" .
+
+<http://data.example.org/resource/cat/3> rdf:type :Cat ;
+                                         :name "Gaston" .
+
+<http://data.example.org/resource/cat/4> rdf:type :Cat ;
+                                         :name "Luna" .
+
+<http://data.example.org/resource/cat/5> rdf:type :Cat ;
+                                         :name "Artemis" .
+
+<http://data.example.org/resource/person/2> rdf:type :Person ;
+                                            :owns <http://data.example.org/resource/cat/5> ;
+                                            :name "Minako" .
+
+<http://data.example.org/resource/person/3> rdf:type :Person ;
+                                            :owns <http://data.example.org/resource/cat/4> ;
+                                            :name "Usagi" .
