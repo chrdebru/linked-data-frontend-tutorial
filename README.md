@@ -25,7 +25,7 @@ For this tutorial, we will host all frontends on our local machine (127.0.0.1). 
 $ sudo pico /etc/hosts
 ```
 
-And add the following line
+And add the following line (on a new line):
 
 `127.0.0.1 data.example.org`
 
@@ -114,6 +114,189 @@ If you want backlinks, you can add the following query to the configuration:
 ```
 conf:resourceDescriptionQuery "CONSTRUCT { ?s ?p ?__this__ } WHERE { ?s ?p ?__this__ }" ;
 ```
+
+The results of the two resource description queries will be merged. Restart Jetty and you will now see the backlinks appear:
+
+![Backlinks are now shown in Pubby](./images/pubby-2.png)
+
+Congratulations, you have now set up your Linked Data frontend for your data. When you click on the URI of the predicate `cat:Cat`, however, you will see that it does not lead to anything yet. In the next chapter, we will service the ontology as Linked Data. 
+
+# 3 Serving the Ontology as Linked Data
+
+## 3.1 Requirements
+*	We will use [WIDOCO](https://github.com/dgarijo/Widoco) to generate documentation and various RDF serializations of our ontology.
+  * Reference: Garijo, D. (2017, October). WIDOCO: a wizard for documenting ontologies. In International Semantic Web Conference (pp. 94-102). Springer, Cham.
+
+*	As WIDOCO generates a `.htaccess` file for Apache2, we will use MAMP, XAMP, or WAMP to host the ontology. In this tutorial, I use MAMP. It will be up to you to figure out where the various configuration files are based.
+
+## 3.2 Stop Jetty
+Jetty currently runs on port 80. We will run MAMP on port 80, but no two services can run on the same port. First stop Jetty and then start MAMP. In the next chapter, I will show how you can integrate both frontends.
+
+## 3.3 Configuring the hosts file
+For this tutorial, we will host all frontends on our local machine (127.0.0.1). So we first need to “trick” our computer into thinking that the domain `ontology.example.org` refers to our machine. We thus need to change our hosts file again.
+
+```bash
+$ sudo pico /etc/hosts
+```
+
+And add the following line (on a new line):
+
+`127.0.0.1 ontology.example.org`
+
+You should now have two entries; one for `data.example.org` and one for `ontology.example.org`.
+
+## 3.4 Using WIDOCO
+First, the base of the ontology is: http://ontology.example.org/cat. We will thus create a folder `cat` to be placed in the `htdocs` directory of our Apache2 Web server. This is not the way to do it. With this approach, however, you can host multiple ontologies under the same domain:
+
+*	http://ontology.example.org/cat
+*	http://ontology.example.org/foo
+*	http://ontology.example.org/bar
+*	...
+
+Download WIDOCO; they provide an executable JAR file with all dependencies included. Double click on the JAR file to launch the GUI. In the first window:
+
+* Choose to create documentation from the ontology file and look for `ontology.ttl`
+* Select the location where you want to export the location (I have used a directory on my desktop)
+* Give the project the name “cat”, which is important for the `.htaccess` file that will be generated
+
+![Widoco's first screen](./images/widoco-1.png)
+
+In the next step, you have the opportunity to fill in some values. For this tutorial, we will not fill in all bits and pieces, though it is encouraged to do so when you publish an ontology. In this tutorial, I will provide a name, title, and a namespace prefix:
+
+* “My Cat Ontology” for both the title and name of the ontology, and
+* “cat” for the prefix -- it corresponds with the prefix that we used for data.example.org. It is not necessary that the prefix corresponds with the one used for data.example.org, but it is helpful for users
+
+![Widoco's second screen](./images/widoco-2.png)
+
+After that, click “Next”. You will have the option to include and load various sections in the documentation. While it is recommended to provide this information, we will skip this part for the sake of this tutorial. You can skip the third screen by clicking “Generate” and then finish by exiting the fourth screen.
+
+The third screen | The final screen
+------------ | -------------
+![Widoco's third screen](./images/widoco-3.png) | ![Widoco's fourth screen](./images/widoco-4.png)
+
+The folder which we have generated contains a bunch of files and folders; an HTML representation and various RDF serializations. One file is hidden, however: `.htaccess`. That file appears when you execute the command `ls -al` inside that directory (or by making invisible files visible in Windows).
+
+Files in Finder | Listing the files with `ls -al`
+------------ | -------------
+![Files in Finder](./images/misc-1.png) | ![Listing the files with `ls -al`](./images/misc-2.png)
+
+The `.htaccess` file contains a bunch of rules implementing the content-negotiation. Below is a snipped of the contents of that file. The rewrite rules for serving TURTLE (TTL) content basically instruct the web server to act as follows: “if an agent requests either “text/turtle” or “text” or “turtle”, then redirect the agent to the TURTLE file.”
+
+```
+# Turn off MultiViews
+Options -MultiViews
+
+# Directive to ensure *.rdf files served as appropriate content type,
+# if not present in main apache config
+AddType application/rdf+xml .rdf
+AddType application/rdf+xml .owl
+AddType text/turtle .ttl
+AddType application/n-triples .n3
+AddType application/ld+json .json
+# Rewrite engine setup
+RewriteEngine On
+#Change the path to the folder here
+RewriteBase /cat
+
+# Omitted for brevity
+
+# Rewrite rule to serve TTL content from the vocabulary URI if requested
+RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
+RewriteCond %{HTTP_ACCEPT} text/\* [OR]
+RewriteCond %{HTTP_ACCEPT} \*/turtle
+RewriteRule ^$ ontology.ttl [R=303,L]
+
+RewriteCond %{HTTP_ACCEPT} .+
+RewriteRule ^$ 406.html [R=406,L]
+# Default response
+# ---------------------------
+# Rewrite rule to serve the RDF/XML content from the vocabulary URI by default
+RewriteRule ^$ ontology.xml [R=303,L]
+```
+Move the directory `cat` to the `htdocs` folder of you MAMP installation and start the web server.
+
+If you enter http://ontology.example.org/cat in the browser, you will be redirected to http://ontology.example.org/cat/index-en.html. And if you enter http://ontology.example.org/cat#Cat (the URI of our Cat concept), you will be redirected to http://ontology.example.org/cat/index-en.html#Cat. This demonstrates that we serve HTML per Linked Data principles!
+
+Result of entering http://ontology.example.org/cat in the browser. | Result of entering http://ontology.example.org/cat#Cat in the browser.
+------------ | -------------
+![Result of entering http://ontology.example.org/cat in the browser.](./images/web-1.png) | ![Result of entering http://ontology.example.org/cat#Cat in the browser.](./images/web-2.png)
+
+Let’s use cURL to test whether we obtain RDF. cURL is a command line tool used for transferring files.
+
+```bash
+$ curl -L -H "Accept: application/rdf+xml" –i http://ontology.example.org/cat#Cat
+```
+
+The options I use are:
+
+*	`-L`	for accepting all redirects
+*	`-H 	"Accept: application/rdf+xml"` for adding header information. I am looking for RDF/XML
+*	`-i` 	Include the HTTP-header in the output
+
+And this is the result:
+
+![Result of executing the cURL command](./images/curl-1.png)
+
+Remember from the Linked Data lecture the discussion on URI fragments. The ontology relies on fragments (`#Cat`, `#Person`, `#owns`, ... are all named nodes in the ontology). This means that the client “discard” the fragment while fetching the resource in which that named node is to be found. In other words: the whole file is downloaded (as you can see), but it is up to the client to find the named node. In a browser, the named node is used as an anchor. Let’s now request TURTLE and see the rewrite rules from the `.htaccess` being used:
+
+```bash
+$ curl -L -H "Accept: */turtle" –i http://ontology.example.org/cat#Cat
+```
+
+![Result of executing the cURL command (II)](./images/curl-2.png)
+
+Now we published our ontology according to Linked Data principles. How do we now provide both the ontology and the data? We cannot have both Jetty and Apache2 listening on port 80. In the next section, I will show you how to tie everything together.
+
+# 4 Serving the Ontology and Data as Linked Data
+
+## 4.1 Requirements
+*	You have followed the first two parts of the tutorial
+*	Both Jetty and Apache2 are NOT running
+
+## 4.2 Preambule
+The gist of integrating both tutorials is to have the Linked Data frontend listening on a different port (e.g., 8080) and use Apache2 to listen to requests for data.example.org on port 80 and mediate those requests between the agent and the Jetty web server. This achieved with virtual hosts in one of the Apache2 configuration files. The location of the `httpd.conf` file, or the `httpd-vhosts.conf` file if you want to keep it separate depends on your xAMP installation. Be careful if you use the latter, however, the latter is not always included in the `httpd.conf` file. You may need to uncomment the following line:
+
+`#Include /Applications/MAMP/conf/apache/extra/httpd-vhosts.conf`
+
+For the purpose of this tutorial, however, I will add the following snippet to my `httpd.conf` file:
+
+```
+NameVirtualHost         *:80
+
+<VirtualHost *:80>
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+    ServerName data.example.org
+</VirtualHost>
+
+<VirtualHost *:80>
+    DocumentRoot "/Applications/MAMP/htdocs/"
+    ServerName ontology.example.org
+</VirtualHost>
+```
+
+This instructs the Apache2 server to create a virtual host listening to any domain on port 80 and:
+
+* If the domain you aim to reach is data.example.org, then all incoming and outgoing requests are redirected to a web server (localhost) listening to port 8080.
+* If you are listening to ontology.example.org, you are sent to the location containing or document.
+
+Save these changes in the `httpd.conf` file and (re)start Apache2. Then start Jetty with the following command (be careful, I assume that Fuseki is already running):
+
+```bash
+$ java -jar start.jar
+```
+
+The default port of Jetty is 8080. Now let’s put http://data.example.org/resource/cat/1 in the address bar of the browser, and we are redirected to http://data.example.org/page/resource/cat/1.
+
+![Pubby via a reverse proxy](./images/final-1.png)
+
+Notice that the description states that Victor is a cat (`rdf:type cat:Cat`). The `cat:Cat` is a hyperlink to http://ontology.example.org/cat#Cat, which is the URI of our Cat concept. Click on that link to follow that URI, and you will notice that you are now redirected to http://ontology.example.org/cat/index-en.html#Cat! Congratulations, you now serve both the data and the ontology and Linked Data on your local machine.
+
+![Cats in our ontology!](./images/final-2.png)
+
+# 5 In Conclusion
+With this tutorial, you should be able to set up a basic Linked Data Frontend that services both an ontology and data. I believe this tutorial is useful to better understand Linked Data and for setting up proof-of-concept frontends for student and research projects. Feel free to contact me with feedback.
 
 # License
 This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
