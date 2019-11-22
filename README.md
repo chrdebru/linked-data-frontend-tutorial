@@ -1,7 +1,9 @@
 # Serving Linked Data: A Step-by-Step Tutorial
-Christophe Debruyne  
-ADAPT, Trinity College Dublin  
-WISE, Vrije Universiteit Brussel
+
+[Christophe Debruyne ](http://christophedebruyne.be/)  
+---
+[ADAPT](https://www.adaptcentre.ie/), [Trinity College Dublin](https://www.tcd.ie/)  
+[WISE](https://wise.vub.ac.be/), [Vrije Universiteit Brussel](https://www.vub.be/)
 
 # 1 Introduction
 The goal of this document is to provide you with step-by-step instructions for serving your data and ontology as Linked Data. This document by no means claims to provide the way for publishing those resources as such but may provide a basis.
