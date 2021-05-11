@@ -61,7 +61,7 @@ SELECT DISTINCT ?type WHERE { [] a ?type }
 ![Querying in Fuseki](./images/fuseki-4.png)
 
 ## 2.4 Setting up Jetty and Pubby
-Jetty is a simple Web server, written in Java, and Java Servlet container. Pubby is our generic Linked Data frontend. While Pubby comes with Jetty and can be run as such from a terminal, we will compile and package Pubby and run Pubby from our own Jetty container. This allows us to have a bit more control.
+Jetty is a simple web server, written in Java, and Java Servlet container. Pubby is our generic Linked Data frontend. While Pubby comes with Jetty and can be run as such from a terminal, we will compile and package Pubby and run Pubby from our own Jetty container. This allows us to have a bit more control.
 
 First we download and unzip Jetty. Then we download or clone Pubby. We will create the package inside the Pubby folder. It is likely that mvn will complain when generating documentation. We can avoid this by skipping the generation of documentation with the following command:
 
@@ -69,7 +69,9 @@ First we download and unzip Jetty. Then we download or clone Pubby. We will crea
 $ mvn package -DskipTests -Dmaven.javadoc.skip=true
 ```
 
-You will notice that mvn created a package (`./target/pubby.war`). The contents of that WAR are also in the folder `./target/pubby`. Rename that directory to `ROOT` and place that directory in the `./webapp/` folder of Jetty. A web application in a folder called “ROOT” will be treated as running from the domain `data.example.org`.
+(If the build failed and show something like *"Source option 6 is no longer supported. Use 7 or later."*, you probably use a too recent JDK. Consider to downgrade JDK version (unfornately, changing [source or target of Java compiler](http://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-source-and-target.html) will not help in this case). JDK 8 should work fine.)
+
+You will notice that mvn created a package (`./target/pubby.war`). The contents of that WAR are also in the folder `./target/pubby`. Rename that directory to `ROOT` and place that directory in the `./webapps/` folder of Jetty. A web application in a folder called “ROOT” will be treated as running from the domain `data.example.org`.
 
 Before we start Jetty, we will first need to configure Pubby. Pubby contains a configuration file that indicates how and where the data is to be found. The file is located at `./ROOT/WEB-INF/config.ttl`. Replace the contents with the following:
 
@@ -104,8 +106,10 @@ We included the namespace of our ontology and qualified it with the prefix `cat:
 We now go the Jetty folder and run Jetty from the command line. De default port of Jetty is 8080, but we will run it from port 80. It might be that you need admin privileges to run Jetty on port 80. If that is the case, you may need to either change privileges or run Jetty as an admin.
 
 ```bash
-$ java -jar start.jar -Djetty.port=80
+$ java -jar start.jar -Djetty.http.port=80
 ```
+
+Please make sure that Fuseki server is still running.
 
 If we visit http://data.example.org/, we will now see that our resources are available with Linked Data principles. Following the URI for the Non-information Resource http://data.example.org/resource/cat/1 will redirect us to the Information Resource (Web page) describing that NIR with URI http://data.example.org/page/resource/cat/1.
 
