@@ -69,7 +69,7 @@ First we download and unzip Jetty. Then we download or clone Pubby. We will crea
 $ mvn package -DskipTests -Dmaven.javadoc.skip=true
 ```
 
-(If the build failed and show something like *"Source option 6 is no longer supported. Use 7 or later."*, you probably use a too recent JDK. Consider to downgrade JDK version (unfornately, changing [source or target of Java compiler](http://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-source-and-target.html) will not help in this case). JDK 8 should work fine.)
+(If the build failed and show something like *"Source option 6 is no longer supported. Use 7 or later."*, you probably use a too recent JDK. Downgrading JDK version may fix this. Changing [source or target of Java compiler](http://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-source-and-target.html) will not help in this case, unfortunately. JDK 8 should work fine.)
 
 You will notice that mvn created a package (`./target/pubby.war`). The contents of that WAR are also in the folder `./target/pubby`. Rename that directory to `ROOT` and place that directory in the `./webapps/` folder of Jetty. A web application in a folder called “ROOT” will be treated as running from the domain `data.example.org`.
 
